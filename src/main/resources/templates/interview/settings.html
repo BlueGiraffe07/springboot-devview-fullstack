@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}">
+    <link rel="alternate icon" href="/img/favicon.svg" type="image/svg+xml">
+    <!-- ✅ CSRF Token Meta Tags 추가 -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <title>Interview Settings - DevView</title>
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/loading-spinner.css}">
+    <link rel="stylesheet" th:href="@{/css/interview-settings.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main>
+    <!-- 수정: OAuth2 호환을 위해 세션 기반으로 변경 -->
+    <input type="hidden" id="current-user-id"
+           th:value="${session.loginUser != null ? session.loginUser.userId : ''}">
+
+    <div class="settings-container">
+        <h1>면접 사전 설정</h1>
+        <p>Configure your AI interview settings to match your needs.</p>
+
+        <form id="interview-form">
+            <!-- ✅ CSRF 토큰을 폼에 포함 (일반 폼 제출용 백업) -->
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <h2>경력 수준</h2>
+            <div class="options-group" id="career-group">
+                <button type="button" class="option-btn" data-value="JUNIOR">
+                    <img th:src="@{/img/junior-icon.svg}" alt="Junior Icon" class="btn-icon">
+                    <span>Junior</span>
+                </button>
+                <button type="button" class="option-btn active" data-value="MID_LEVEL">
+                    <img th:src="@{/img/mid-icon.svg}" alt="Mid-Level Icon" class="btn-icon">
+                    <span>Mid-Level</span>
+                </button>
+                <button type="button" class="option-btn" data-value="SENIOR">
+                    <img th:src="@{/img/senior-icon.svg}" alt="Senior Icon" class="btn-icon">
+                    <span>Senior</span>
+                </button>
+            </div>
+
+            <h2>개발 직군</h2>
+            <div class="options-group" id="position-group">
+                <button type="button" class="option-btn" data-value="BACKEND">
+                    <img th:src="@{/img/backend-icon.svg}" alt="Backend Icon" class="btn-icon">
+                    <span>Backend</span>
+                </button>
+                <button type="button" class="option-btn active" data-value="FRONTEND">
+                    <img th:src="@{/img/frontend-icon.svg}" alt="Frontend Icon" class="btn-icon">
+                    <span>Frontend</span>
+                </button>
+                <button type="button" class="option-btn" data-value="FULLSTACK">
+                    <img th:src="@{/img/fullstack-icon.svg}" alt="Fullstack Icon" class="btn-icon">
+                    <span>Fullstack</span>
+                </button>
+                <button type="button" class="option-btn" data-value="DEVOPS">
+                    <img th:src="@{/img/devops-icon.svg}" alt="DevOps Icon" class="btn-icon">
+                    <span>DevOps</span>
+                </button>
+                <button type="button" class="option-btn" data-value="DATA_AI">
+                    <img th:src="@{/img/data-ai-icon.svg}" alt="Data / AI Icon" class="btn-icon">
+                    <span>Data / AI</span>
+                </button>
+            </div>
+
+            <h2>면접 유형</h2>
+            <div class="options-group" id="type-group">
+                <button type="button" class="option-btn active" data-value="TECHNICAL">
+                    <img th:src="@{/img/technical-icon.svg}" alt="Technical Icon" class="btn-icon">
+                    <span>기술면접</span>
+                </button>
+                <button type="button" class="option-btn" data-value="PRACTICAL">
+                    <img th:src="@{/img/practical-icon.svg}" alt="Practical Icon" class="btn-icon">
+                    <span>실무면접</span>
+                </button>
+                <button type="button" class="option-btn" data-value="BEHAVIORAL">
+                    <img th:src="@{/img/behavioral-icon.svg}" alt="Behavioral Icon" class="btn-icon">
+                    <span>인성면접</span>
+                </button>
+                <button type="button" class="option-btn" data-value="COMPREHENSIVE">
+                    <img th:src="@{/img/comprehensive-icon.svg}" alt="Comprehensive Icon" class="btn-icon">
+                    <span>종합면접</span>
+                </button>
+            </div>
+
+            <h2>면접 시간</h2>
+            <div class="select-wrapper">
+                <select id="duration-select" class="form-select">
+                    <option value="5">5 minutes</option>
+                    <option value="10">10 minutes</option>
+                    <option value="15" selected>15 minutes</option>
+                    <option value="30">30 minutes</option>
+                    <option value="60">60 minutes</option>
+                </select>
+            </div>
+
+            <h2>질문 갯수</h2>
+            <div class="select-wrapper">
+                <select id="question-count-select" class="form-select">
+                    <option value="3">3 questions</option>
+                    <option value="5" selected>5 questions</option>
+                    <option value="7">7 questions</option>
+                    <option value="10">10 questions</option>
+                </select>
+            </div>
+
+            <button type="submit" class="interview-submit-btn">면접 시작하기 →</button>
+        </form>
+    </div>
+</main>
+
+<script th:src="@{/js/spinner.js}"></script>
+<script th:src="@{/js/interview-settings.js}"></script>
+<div th:replace="~{fragments/loading-spinner :: spinner}"></div>
+</body>
+</html>

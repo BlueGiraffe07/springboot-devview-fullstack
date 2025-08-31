@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>마이페이지</title>
+
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}">
+    <link rel="alternate icon" href="/img/favicon.svg" type="image/svg+xml">
+
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+
+    <link rel="stylesheet" th:href="@{/css/mypage.css}" />
+    <link rel="stylesheet" th:href="@{/css/header.css}" />
+    <link rel="stylesheet" th:href="@{/css/password-change.css}" />
+
+    <script th:src="@{/js/lib/chart.min.js}"></script>
+    <script defer th:src="@{/js/mypage.js}"></script>
+
+    <script defer th:src="@{/js/password-change.js}"></script>
+</head>
+<body>
+<!-- 헤더 -->
+<th:block th:replace="~{fragments/header :: header}"></th:block>
+
+<div class="mypage-container">
+
+    <!-- 상단 인사 -->
+    <h1><strong>마이페이지</strong></h1>
+    <h2 class="greeting" th:text="'안녕하세요, ' + ${user.name} + '님!'">안녕하세요, 사용자님!</h2>
+
+    <div class="profile-layout">
+        <div class="left-column">
+            <!-- 프로필 카드 -->
+            <div class="profile-card">
+                <div class="profile-image">
+                    <img th:if="${user.profileImageUrl != null}" th:src="@{${user.profileImageUrl}}" alt="프로필" />
+                    <img th:if="${user.profileImageUrl == null}" src="/img/진욱.svg" alt="기본 이미지" />
+                    <br>
+                    <h2 class="name" th:text="${user.name}">이름</h2>
+                    <p class="job-level" th:text="${user.job + ', ' + user.careerLevel}">백엔드개발, 주니어 레벨</p>
+                </div>
+
+                <!-- 통계 (ID 추가) -->
+                <div class="stats">
+                    <div><strong id="interviewCount" th:text="${user.totalInterviews}">0</strong><span>면접 횟수</span></div>
+                    <div><strong id="avgScore" th:text="${user.avgScore}">0</strong><span>평균 점수</span></div>
+                    <div><strong id="bestGrade" th:text="${user.grade != null ? user.grade : 'F'}">F</strong><span>최종 등급</span></div>
+                </div>
+
+                <!-- 액션 버튼 -->
+                <div class="actions">
+                    <form th:action="@{/mypage/edit}" method="get">
+                        <button type="submit" class="btn">
+                            <img src="/img/edit.svg" class="icon" alt="프로필 수정" />
+                            프로필 수정
+                        </button>
+                    </form>
+                    <form th:action="@{/mypage/delete}" method="post" id="withdrawalForm">
+                        <!-- CSRF 토큰 히든 필드 추가 -->
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <button type="submit" class="btn danger">
+                            <img src="/img/bye.svg" class="icon" alt="회원 탈퇴" />
+                            회원 탈퇴
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 계정 설정 카드 -->
+            <div class="account-card">
+                <div class="card-title">
+                    <img src="/img/set.svg" class="icon" alt="계정 설정" />
+                    <h3>계정 설정</h3>
+                </div>
+                <p class="kv"><span class="k">이메일</span><span class="v" th:text="${user.email}">example@example.com</span></p>
+                <p class="kv"><span class="k">비밀번호</span><span class="v"><button type="button" id="changePasswordBtn" class="text-link-btn">변경하기</button></span></p>
+                <p class="kv"><span class="k">가입일</span><span class="v" th:text="${user.joinedAt != null ? #temporals.format(user.joinedAt, 'yyyy.MM.dd') : '-'}">YYYY.MM.DD</span></p>
+            </div>
+        </div>
+
+        <div class="right-column">
+            <!-- 점수 변화 그래프 -->
+            <div class="graph-card">
+                <div class="card-title">
+                    <img src="/img/graps.svg" class="icon" alt="점수 변화 그래프"/>
+                    <h3>점수 변화 그래프</h3>
+                </div>
+                <canvas id="scoreChart"
+                        th:attr="data-labels=${scoreGraph != null ? scoreGraph.labelsJson : null},
+                                 data-scores=${scoreGraph != null ? scoreGraph.scoresJson : null}">
+                </canvas>
+            </div>
+
+            <!-- 자기소개 카드 (점수 변화 그래프 아래로 이동) -->
+            <div class="self-intro-card">
+                <div class="card-title">
+                    <img src="/img/edit.svg" class="icon" alt="자기소개" />
+                    <h3>자기소개</h3>
+                </div>
+
+                <!-- 자기소개가 있을 때 -->
+                <div class="self-intro-content" th:if="${user.selfIntroduction != null and !#strings.isEmpty(user.selfIntroduction)}">
+                    <p th:text="${user.selfIntroduction}">자기소개 내용이 여기에 표시됩니다.</p>
+                </div>
+
+                <!-- 자기소개가 없을 때 안내 문구 -->
+                <div class="self-intro-empty" th:if="${user.selfIntroduction == null or #strings.isEmpty(user.selfIntroduction)}">
+                    <div class="empty-icon">✏️</div>
+                    <p class="empty-message">
+                        <strong>자기소개를 작성하면 더 나은 AI 면접 질문을 받을 수 있어요!</strong><br>
+                        개발 경험, 기술 스택, 관심 분야 등을 작성해보세요.
+                    </p>
+                    <a href="/mypage/edit" class="add-intro-btn">
+                        <img src="/img/edit.svg" class="btn-icon" alt="편집" />
+                        자기소개 추가하기
+                    </a>
+                </div>
+            </div>
+
+            <!-- 면접 목록  -->
+            <section class="interview-history">
+                <div class="section-title">
+                    <img src="/img/interviewslist.svg" class="icon" alt="나의 면접 목록"/>
+                    <h3>나의 면접 목록</h3>
+                </div>
+
+                <ul id="interviewList">
+                    <li th:each="interview : ${user.interviews}">
+                        <div class="interview-item">
+                            <div class="row">
+                                <div class="chips">
+                                    <span class="chip chip-type"  th:text="${interview.jobPositionDisplayName}">직무</span>
+                                    <span class="chip chip-level" th:text="${interview.careerLevelDisplayName}">레벨</span>
+                                    <span class="chip chip-type"  th:text="${interview.interviewType}">면접타입</span>
+                                </div>
+
+                                <span class="interview-date"
+                                      th:text="${interview.interviewDate != null ? #strings.replace(interview.interviewDate,'-','.') : ''}"> YYYY.MM.DD </span>
+                                <div class="score-wrap">
+                                    <span class="score" th:text="${interview.totalScore}">0</span>
+                                    <span class="grade" th:text="${interview.grade + ' 등급'}">-</span>
+                                </div>
+                            </div>
+                            <a class="btn small" th:href="${interview.detailUrl}">상세 보기</a>
+                        </div>
+                    </li>
+                </ul>
+            </section>
+
+
+            <!-- 스크랩 목록 -->
+            <section class="scrap-section">
+                <div class="section-title">
+                    <img src="/img/scrap.svg" class="icon" alt="스크랩 목록"/>
+                    <h3>스크랩 목록</h3>
+                </div>
+
+                <ul id="scrapList" class="scrap-grid">
+                    <li th:each="scrap : ${user.scraps}">
+                        <a th:href="@{/community/posts/{id}/detail(id=${scrap.postId})}"
+                           class="scrap-item">
+                            <div class="scrap-header">
+                                <div class="scrap-author">
+                                    <i class="fa-solid fa-user"></i>
+                                    <span th:text="${scrap.writerName}">작성자</span>
+                                </div>
+                                <div class="scrap-stats">
+                        <span class="like-count">
+                            <i class="fa-solid fa-heart"></i>
+                            <span th:text="${scrap.likes}">0</span>
+                        </span>
+                                </div>
+                            </div>
+
+                            <h4 class="scrap-title" th:text="${scrap.title}">제목</h4>
+                            <p class="scrap-preview" th:text="${scrap.preview}">미리보기 내용</p>
+
+                            <div class="scrap-footer">
+                                <span class="scrap-tag">스크랩됨</span>
+                            </div>
+                        </a>
+                    </li>
+
+                    <!-- 빈 상태 -->
+                    <li th:if="${#lists.isEmpty(user.scraps)}" class="empty-state">
+                        <div class="empty-content">
+                            <i class="fa-regular fa-bookmark"></i>
+                            <p>아직 스크랩한 글이 없습니다</p>
+                            <a href="/community" class="empty-link">커뮤니티 둘러보기</a>
+                        </div>
+                    </li>
+                </ul>
+            </section>
+        </div>
+    </div>
+</div>
+
+<!-- 비밀번호 변경 모달 -->
+<div id="passwordChangeModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>비밀번호 변경</h3>
+            <button type="button" id="closeModalBtn" class="close-btn">&times;</button>
+        </div>
+
+        <form id="passwordChangeForm" class="modal-body">
+            <!-- 현재 비밀번호 -->
+            <div class="form-group">
+                <label for="currentPassword" class="form-label">현재 비밀번호</label>
+                <div class="input-group">
+                    <input
+                            type="password"
+                            id="currentPassword"
+                            name="currentPassword"
+                            class="form-input"
+                            placeholder="현재 비밀번호를 입력해주세요"
+                            maxlength="20"
+                            required
+                    >
+                    <button type="button" class="password-toggle" data-target="currentPassword">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="error-message" id="currentPasswordError"></div>
+            </div>
+
+            <!-- 새 비밀번호 -->
+            <div class="form-group">
+                <label for="newPassword" class="form-label">새 비밀번호</label>
+                <div class="input-group">
+                    <input
+                            type="password"
+                            id="newPassword"
+                            name="newPassword"
+                            class="form-input"
+                            placeholder="새 비밀번호를 입력해주세요 (8자 이상)"
+                            maxlength="20"
+                            required
+                    >
+                    <button type="button" class="password-toggle" data-target="newPassword">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="error-message" id="newPasswordError"></div>
+            </div>
+
+            <!-- 새 비밀번호 확인 -->
+            <div class="form-group">
+                <label for="newPasswordConfirm" class="form-label">새 비밀번호 확인</label>
+                <div class="input-group">
+                    <input
+                            type="password"
+                            id="newPasswordConfirm"
+                            name="newPasswordConfirm"
+                            class="form-input"
+                            placeholder="새 비밀번호를 다시 입력해주세요"
+                            maxlength="20"
+                            required
+                    >
+                    <button type="button" class="password-toggle" data-target="newPasswordConfirm">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="error-message" id="newPasswordConfirmError"></div>
+            </div>
+
+            <!-- 버튼 -->
+            <div class="modal-actions">
+                <button type="button" id="cancelBtn" class="btn-cancel">취소</button>
+                <button type="submit" id="submitBtn" class="btn-submit">변경하기</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>
